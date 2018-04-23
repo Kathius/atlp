@@ -1,0 +1,159 @@
+==========================
+Arindal Text Log Processor
+==========================
+
+Usage: atlp [-m<RrKkMPF>] -p <path> -c <char> [additional options]
+
+
+0. Introduction
+===============
+Atlp is a program to analyze your Arindal log files. I wrote it originally because none of the available rank counters worked for me: my log files aren't consistent and don't contain all rank messages. I needed a tool that also takes the trainer messages into account, providing a much more accurate rank number. Since I am a programmer, the obvious solution was to write one by myself, and that's what I did.
+Meanwhile atlp has grown quite powerful. Not only does it count ranks, it also shows kills, counts fallen messages and shows when you got a new title. You can even provide a time range for which to analyze the files, so you can see, for example, how many ranks you made in a particular month or how much Zerks you killed today.
+However, atlp has no graphical user interface, it's purely command line based and that will never change. I don't have the time (nor am I able) to develop a nice GUI, I want to see results. If you are not familiar with command line tools, then maybe atlp isn't for you. But maybe - far in the future - there is someone who wants to write a graphical frontend or even wants to switch his already existing tool to use atlp for the log processing part.
+The good news about the command line based approach is that it is extremely easy to implement new features. The RrKkMPF modules and the time range took me less than two days to implement, not whole days of course, I wrote most of the code during hunting breaks. So, if you are missing a certain feature, just ask me and chances are that it is implemented within a week. If you need it very quickly, just invite me to an OC hunt and make a 20-minute break in the middle of it ;).
+The bad news is that atlp is only available for windows at the moment. The program is written in D so the sources should, however, perfectly compile for Linux (32-bit) and MacOS as well, the problem is that I have neither. If there is someone out there who likes to compile atlp for Linux or - even better - MacOS, just let me know.
+
+2. Options
+==========
+
+-p <path>
+
+The path to the Arindal base directory, e.g. "-p c:\arindal". The text log directory is automatically determined. When there are spaces in the path name, you have to put "" around it.
+
+
+-c <char>
+
+The character for whom to process the log files, e.g. "-c Kathius". You have to use the correct case, i.e you may not write "kathius" instead of "Kathius".
+
+
+-m<RrKkMPF>
+
+Which modules to use. You may provide one or more of the letters, each one representing a module described later in the modules section. If the -m option is not set, -mR (extended rank counter) is assumed.
+
+
+-dS <date>
+
+Only process lines starting from <date>. The date must be in the format "[20]yy-m-d [h:mm:ss]" or "d.m.[20]yy [h:mm:ss]". Years must be provided either in two-digits (07) or four-digits (2007) format. The first possible date is 1st January 2007. If the time is omitted, 00:00:00 is assumed. When the time is given, all three components have to be set and you have to put the whole date in "" because of the space. Hours must be in 24h-format (0:00:00-23:59:59).
+
+
+-dE <date>
+
+Only process lines until <date>. The same rules as with -dS, except that if the time is omitted, 23:59:59 is assumed.
+
+
+-dD <date>
+
+Only process <date>. The same rules as with -dS, but you must not provide a time as it is automatically set starting at 0:00:00 and ending at 23:59:59.
+
+
+
+3. Modules
+==========
+
+r - simple rank counter
+
+Works like all rank counters I know so far :) Simply counts all rank messages. Especially useful if you have defined a starting date.
+
+
+R - extended rank counter
+
+Also takes the trainer messages into account. This can come in handy if you went to Jutta or your text logs are not complete, e.g. you didn't activate them right from the start or you sometimes lose connection. Of course it can get VERY inaccurate if applied together with starting dates, where I guess you only want to know how many ranks you made from there.
+Keep in mind that this counter is not 100% accurate for it assumes that you get the first trainer message with exactly 10 ranks. Therefore there might be a difference of +/-5 to your real ranks, but that's still more accurate than +/-100 ranks with broken text logs.
+Please note the "mix trainer"-issue in the "Bugs and issues" section at the end of this document.
+
+
+K - kill counter
+
+Counts all the slaughters, disps, kills and vanqs for each monster you did alone or with help. It's hard to read - especially when processing all text logs - because the numbers are not aligned. Can be useful in combination with the time range options and for further processing by other programs.
+
+
+k - first kills
+
+Shows when you had a slaughter, disp, kill and vanqs for each monster the first time. Does not differentiate between solo and group kills, as this would not add any useful information.
+
+
+M - milestones
+
+Currently only shows when one of the NPCs used a new title for the first time. More to come.
+
+
+P - personal stats
+
+Currently only shows your name, race, sex, profession and title. Race, sex and profession only work if you used the /info-command on yourself at least once. More to come.
+
+
+F - fallen
+
+Shows how often each monster killed you.
+
+
+
+4. Some examples
+================
+
+Show my ranks:
+
+	atlp -mR -p "c:/arindal" -c Kathius
+
+I use the extended rank counter "R", because I didn't log from the beginning and visited Jutta. In addition - and that makes it worse - I often have disconnects and don't know if there were ranks in between the disconnect and the relogin.
+
+
+Show how much ranks and kills I had during a nice OC hunt as well as how often I fell. (Please don't tell me that there was no OC hunt at this time. Because of lazyness I just chose a random one. ;)):
+
+	atlp -mKrF -p "c:/arindal" -c Kathius -dS "2007-01-10 20:00:00" -dE "2007-01-11 2:00:00"
+
+Note that I now use the simple rank counter, since I want to know the ranks I made during the hunt. The output would be totally messed up if I would have talked to one of my trainers between 18h and 2h.
+
+
+Show the difference between the ranks I have according to the extended rank counter in contrast to the simple one:
+
+	atlp -mRr -p "c:/arindal" -c Kathius
+
+I guess there is no real usage other than a comparison for using both, the extended and the simple rank counter.
+
+
+Oh, and when did I become Adiovus again? Let's have a look:
+
+	atlp -mP -p "c:/arindal" -c Kathius
+	
+
+Now some advanced examples:
+
+Show how much Orgas of all kinds I killed during my lifetime:
+
+	atlp -mK -p "c:/arindal" -c Kathius | grep -i orga
+
+Of course that only works if you have "grep" available. If you don't know what that is and/or how to get it, then just don't care :). Or look at google. Or ask me.
+
+
+Save all available stats into a file:
+
+	atlp -mRKkMPF  -p "c:/arindal" -c Kathius > kathius.txt
+	
+
+	
+5. What's next?
+===============
+
+- a hunt analyzer: find hunts automatically, might be a bit complicated, but I guess I can do it ;)
+
+- recover from file: if output is saved to a file, it can be used as the starting point for processing. That way you wouldn't have to let atlp process each and every log file again and again.
+
+
+
+6. Issues and bugs
+==================
+
+Issues (things that shouldn't cause too much trouble, but should be fixed some time in the future):
+------
+- languages: implement the other languages
+
+
+The mix trainer issue
+---------------------
+I once read in the clanlord forums that mix trainers have influence on other trainers' messages. E.g there is a trainer teaching you "Recupera" and "Citius" 4:1. After 50 ranks you would get the 40-ranks message from Recupera and the 10-ranks message of Citius, although you never might have trained them. In addition, you get the 50-ranks message from your actual trainer. If that really is the case, then my rank counter would count 100 ranks when you only trained 50.
+As I haven't seen this behaviour yet, there are two possibilities: 1) It isn't the case in Arindal: then everything is ok. 2) There are no real mix trainers yet: then this will get an issue as soon as they are implemented. That doesn't mean I can't solve that. But I really prefer to wait to think about how to write the code for something that isn't in yet.
+
+Bugs (the real ones):
+----
+find and report them to me :)
